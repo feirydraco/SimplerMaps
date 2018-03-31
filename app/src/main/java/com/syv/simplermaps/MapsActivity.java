@@ -2,6 +2,7 @@ package com.syv.simplermaps;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -12,18 +13,23 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
+
+    private static final int DEFAULT_ZOOM = 15;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 432;
+    private FusedLocationProviderClient fusedLocationProviderClient;
     private DrawerLayout drawerLayout;
     private GoogleMap mMap;
-    private boolean mLocationPermissionGranted = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,8 +43,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(MapsActivity.this, drawerLayout, toolbar, R.string.drawer_open, R.string.drawer_close);
         drawerLayout.addDrawerListener(toggle);
+
         toggle.syncState();
 
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MapsActivity.this);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -50,43 +58,27 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         drawerLayout = findViewById(R.id.main_drawer_layout);
     }
 
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(12.9, 77.5);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(sydney, 12.0f));
-
-        getLocationPermission();
-// TODO: delete test function
-        test();
+        if (getLocationPermission()) {
+            updateLocation();
+            focusCurrentLocation();
+        }
 
     }
 
     private void test() {
-        if (!mLocationPermissionGranted) {
-            return;
-        }
         Toast.makeText(MapsActivity.this, "Location Permission Granted", Toast.LENGTH_LONG).show();
     }
 
-    private void getLocationPermission() {
+    private boolean getLocationPermission() {
         if (ContextCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            mLocationPermissionGranted = true;
+            return true;
         } else {
             ActivityCompat.requestPermissions(MapsActivity.this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+            return false;
         }
     }
 
@@ -95,12 +87,39 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         switch (requestCode) {
             case LOCATION_PERMISSION_REQUEST_CODE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    mLocationPermissionGranted = true;
+                    updateLocation();
+                    focusCurrentLocation();
                 }
-// TODO: delete test function
-                test();
                 break;
 
+        }
+    }
+
+    private void updateLocation() {
+        try {
+            mMap.setMyLocationEnabled(true);
+        } catch (SecurityException e) {
+            e.printStackTrace();
+            // TODO: verify if the control will ever come here
+        }
+    }
+
+    private void focusCurrentLocation() {
+        try {
+            Task<Location> locationTask = fusedLocationProviderClient.getLastLocation();
+            locationTask.addOnCompleteListener(MapsActivity.this, new OnCompleteListener<Location>() {
+                @Override
+                public void onComplete(@NonNull Task<Location> task) {
+                    if (task.isSuccessful()) {
+                        Location location = task.getResult();
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), DEFAULT_ZOOM));
+                    } else {
+                        //TODO: Handle the camera focus  if no location available.
+                    }
+                }
+            });
+        } catch (SecurityException e) {
+            e.printStackTrace();
         }
     }
 }
