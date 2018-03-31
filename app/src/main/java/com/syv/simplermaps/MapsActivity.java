@@ -5,12 +5,14 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -23,12 +25,13 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
 
     private static final int DEFAULT_ZOOM = 15;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 432;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private DrawerLayout drawerLayout;
+    private NavigationView navigationView;
     private GoogleMap mMap;
 
     @Override
@@ -41,6 +44,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         initViews();
 
+        navigationView.setNavigationItemSelectedListener(MapsActivity.this);
+
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(MapsActivity.this, drawerLayout, toolbar, R.string.drawer_open, R.string.drawer_close);
         drawerLayout.addDrawerListener(toggle);
 
@@ -48,7 +53,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MapsActivity.this);
 
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(MapsActivity.this);
@@ -56,6 +60,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void initViews() {
         drawerLayout = findViewById(R.id.main_drawer_layout);
+        navigationView = findViewById(R.id.maps_navigation_view);
     }
 
     @Override
@@ -68,6 +73,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
     }
+
 
     private void test() {
         Toast.makeText(MapsActivity.this, "Location Permission Granted", Toast.LENGTH_LONG).show();
@@ -100,7 +106,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mMap.setMyLocationEnabled(true);
         } catch (SecurityException e) {
             e.printStackTrace();
-            // TODO: verify if the control will ever come here
+            // TODO: verify if the control will ever come here.
         }
     }
 
@@ -121,5 +127,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         } catch (SecurityException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.maps_menu_item_home:
+                return true;
+            case R.id.maps_menu_item_exit:
+                finish();
+                // TODO: Original way to exit an app.
+                return true;
+        }
+        return false;
     }
 }
