@@ -35,7 +35,6 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.maps.GeoApiContext;
 import com.google.maps.model.DirectionsResult;
-import com.google.maps.model.EncodedPolyline;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener, LoaderManager.LoaderCallbacks<DirectionsResult> {
 
@@ -124,7 +123,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mMap.addMarker(new MarkerOptions().position(new LatLng(results.routes[0].legs[0].startLocation.lat, results.routes[0].legs[0].startLocation.lng)).title(results.routes[0].legs[0].startAddress));
             mMap.addMarker(new MarkerOptions().position(new LatLng(results.routes[0].legs[0].endLocation.lat, results.routes[0].legs[0].endLocation.lng)).title(results.routes[0].legs[0].startAddress).snippet(getEndLocationTitle(results)));
             PolylineOptions polylineOptions = new PolylineOptions().width(5).color(Color.BLUE).geodesic(true);
-            for(int i=0; i<results.routes[0].legs[0].steps.length; i++) {
+            for (int i = 0; i < results.routes[0].legs[0].steps.length; i++) {
 //                EncodedPolyline polyline = results.routes[0].legs[0].steps[0].polyline;
 //                TODO: Draw Route on Map.
             }
@@ -175,8 +174,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             locationTask.addOnCompleteListener(MapsActivity.this, new OnCompleteListener<Location>() {
                 @Override
                 public void onComplete(@NonNull Task<Location> task) {
-                    if (task.isSuccessful()) {
-                        Location location = task.getResult();
+                    Location location = task.getResult();
+                    if (task.isSuccessful() && location != null) {
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), DEFAULT_ZOOM));
                     } else {
                         //TODO: Handle the camera focus  if no location available.
